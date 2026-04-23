@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   idp-frontend:
     build: 
-      context: ./idp-frontend
+      context: ./frontend
       dockerfile: Dockerfile
     image: idp-frontend:latest
     ports:
@@ -18,16 +16,18 @@ services:
 
   idp-backend:
     build:
-      context: ./idp-backend
+      context: ./backend
       dockerfile: Dockerfile
     image: idp-backend:latest
     ports:
       - "3000:3000"
     volumes:
-      - ./terraform:/terraform:ro
+      - ./terraform:/terraform
+      - ${HOME}/.aws:/home/node/.aws:ro
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - AWS_SDK_LOAD_CONFIG=1
     restart: unless-stopped
     networks:
       - idp-network
