@@ -101,6 +101,7 @@ async function runTerraform(socket, provisionId, action = 'apply', params = {}) 
         }
 
         const tf = spawn('terraform', commandArgs);
+        let terraformStderr = '';
 
         tf.stdout.on('data', (data) => {
             const lines = data.toString().split('\n');
@@ -120,6 +121,7 @@ async function runTerraform(socket, provisionId, action = 'apply', params = {}) 
             // Strip ANSI escape codes
             const clean = data.toString().replace(/\x1b\[[0-9;]*m/g, '').trim();
             if (clean) {
+                terraformStderr += `${clean}\n`;
                 socket.emit('terraform_log', {
                     provisionId,
                     log: { time: new Date().toLocaleTimeString(), message: clean, type: 'error' }
@@ -142,9 +144,17 @@ async function runTerraform(socket, provisionId, action = 'apply', params = {}) 
             } else if (code !== 0 && !isDestroy) {
                 // Apply failed - update status and rollback
                 await db.updateResource(provisionId, { status: 'Error' });
+
+                let failureHint = 'Provisioning failed. Check AWS credentials and permissions.';
+                if (terraformStderr.includes('already scheduled for deletion')) {
+                    failureHint = 'Provisioning failed: Secrets Manager secret name conflict (scheduled for deletion). Retry provisioning to generate a new unique secret name.';
+                } else if (terraformStderr.includes('UnauthorizedOperation') || terraformStderr.includes('AccessDenied')) {
+                    failureHint = 'Provisioning failed: IAM permissions are insufficient for one or more AWS resources.';
+                }
+
                 socket.emit('terraform_log', {
                     provisionId,
-                    log: { time: new Date().toLocaleTimeString(), message: 'Provisioning failed. Check AWS credentials and permissions.', type: 'error' }
+                    log: { time: new Date().toLocaleTimeString(), message: failureHint, type: 'error' }
                 });
                 socket.emit('terraform_complete', { provisionId, success: false, error: 'Apply failed' });
             } else {

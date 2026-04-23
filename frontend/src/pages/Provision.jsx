@@ -17,7 +17,7 @@ export function Provision() {
   const serviceId = searchParams.get('service') || 'rds-pg';
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/catalog').then(r => r.json()).then(json => {
+    fetch('/api/catalog').then(r => r.json()).then(json => {
       const configs = {};
       json.catalog.forEach(item => {
         let caps = ['Standard'], cost = 10, engine = item.id;

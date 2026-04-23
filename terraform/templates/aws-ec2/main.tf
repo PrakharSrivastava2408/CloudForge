@@ -30,6 +30,10 @@ resource "random_password" "ec2_password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+resource "random_id" "secret_suffix" {
+  byte_length = 4
+}
+
 # Create a key pair using the generated password
 resource "tls_private_key" "generated" {
   algorithm = "RSA"
@@ -43,7 +47,7 @@ resource "aws_key_pair" "generated" {
 
 # Store credentials in Secrets Manager
 resource "aws_secretsmanager_secret" "ec2_credentials" {
-  name                    = "idp-ec2-${var.environment}-credentials"
+  name                    = "idp-ec2-${var.environment}-credentials-${random_id.secret_suffix.hex}"
   recovery_window_in_days = 7
 
   tags = {
