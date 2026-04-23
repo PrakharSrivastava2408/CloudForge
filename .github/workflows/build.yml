@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: idp-frontend
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: idp-frontend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: idp-backend
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: idp-backend/package-lock.json
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -70,17 +70,17 @@ jobs:
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./idp-backend
+          context: ./backend
           push: false
-          tags: idp-backend:${{ github.sha }}
+          tags: backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./idp-frontend
+          context: ./frontend
           push: false
-          tags: idp-frontend:${{ github.sha }}
+          tags: frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
